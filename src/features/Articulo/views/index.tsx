@@ -28,13 +28,17 @@ export default function ArticleSelector() {
   const handleUpload = async () => {
     if (!file) return;
     if (!contexto) {
-      alert("Error: No hay un contexto activo. Por favor, selecciona uno.");
+      router.push("/contexto");
       return;
     }
     setIsUploading(true);
     try {
       const result = await subirArchivoCSV(file, contexto);
-      setArticles(result);
+      const withIds = result.map((articulo, index) => ({
+      ...articulo,
+      id_articulo: index + 1, 
+    }));
+      setArticles(withIds);
       setUploadSuccess(true);
     } catch (err) {
       console.error(err);
