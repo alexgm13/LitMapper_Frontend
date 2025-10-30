@@ -1,0 +1,253 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, #f8fafc, #eff6ff, #e0e7ff);
+  padding: 3rem 1rem;
+}
+
+.wrapper {
+  max-width: 1024px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.iconWrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  background: linear-gradient(to right, #2563eb, #4338ca);
+  border-radius: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.iconMain {
+  width: 2rem;
+  height: 2rem;
+  color: white;
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  color: #4b5563;
+  font-size: 1.125rem;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* Éxito */
+.successBox {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  text-align: center;
+  color: #065f46;
+  margin-bottom: 2rem;
+}
+
+.successHeader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.successIcon {
+  color: #059669;
+}
+
+.successTitle {
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.successMessage {
+  font-size: 0.875rem;
+}
+
+/* Card principal */
+.card {
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.cardBody {
+  padding: 2rem;
+}
+
+.nav {
+  margin-bottom: 2rem;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.backButton:hover {
+  color: #1e40af;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.labelIconBlue {
+  color: #2563eb;
+}
+
+.labelIconIndigo {
+  color: #4338ca;
+}
+
+.labelIconRed {
+  color: #dc2626;
+}
+
+.labelIconPurple {
+  color: #7e22ce;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  background-color: #f9fafb;
+  padding: 0.875rem 1rem;
+  color: #111827;
+  transition: all 0.2s ease;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: #2563eb;
+  background: white;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+.helper {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .buttons {
+    flex-direction: row;
+  }
+}
+
+.submitBtn {
+  flex: 1;
+  background: linear-gradient(to right, #2563eb, #4338ca);
+  color: white;
+  border: none;
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.submitBtn:hover {
+  background: linear-gradient(to right, #1e40af, #3730a3);
+}
+
+.clearBtn {
+  flex: 1;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.clearBtn:hover {
+  background: #f9fafb;
+}
+
+.spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid white;
+  border-top-color: transparent;
+  border-radius: 9999px;
+  animation: spin 1s linear infinite;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+/* Consejos */
+.guidance {
+  background: #eff6ff;
+  border-top: 1px solid #bfdbfe;
+  padding: 1.5rem 2rem;
+  text-align: center;
+}
+
+.guidanceTitle {
+  color: #1e3a8a;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.guidanceText {
+  color: #1e40af;
+  font-size: 0.875rem;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
