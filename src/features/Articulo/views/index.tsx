@@ -8,52 +8,54 @@ import type { Articulo } from "../types";
 import { useRouter } from "next/navigation";
 import { useArticuloStore } from "../store/useArticuloStore";
 
-export default function ArticleSelector() {
+export default function ArticuloView() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [articles, setArticles] = useState<Articulo[]>([]);
   const [activeTab, setActiveTab] = useState<"relevant" | "non-relevant">("relevant");
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
   const contexto = useContextoStore((s) => s.contextoActivo);
   const router = useRouter();
   const setArticulosRelevantes = useArticuloStore((s) => s.setArticulosRelevantes);
 
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile && selectedFile.type === "text/csv") setFile(selectedFile);
-    else alert("Por favor selecciona un archivo CSV válido");
+    const selected = e.target.files?.[0];
+    if (!selected || selected.type !== "text/csv") {
+      alert("Selecciona un archivo CSV válido");
+      return;
+    }
+    setFile(selected);
   };
 
   const handleUpload = async () => {
-    if (!file) return;
-    if (!contexto) {
-      router.push("/contexto");
-      return;
-    }
+    if (!file) return alert("Selecciona un archivo");
+    if (!contexto) return router.push("/proyecto");
+
     setIsUploading(true);
     try {
       const result = await subirArchivoCSV(file, contexto);
-      const withIds = result.map((articulo, index) => ({
-      ...articulo,
-      id_articulo: index + 1, 
-    }));
-      setArticles(withIds);
+      setArticles(result);
       setUploadSuccess(true);
-    } catch (err) {
-      console.error(err);
-      alert("Error al procesar el archivo en el servidor.");
+    } catch (e) {
+      console.error(e);
+      alert("Error al procesar el archivo");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const handleToggleRelevancia = async (doi?: string) => {
-    if (!doi) return; 
-    const prev = [...articles];
-    setArticles((curr) =>
-      curr.map((a) => (a.doi === doi ? { ...a, es_relevante: !a.es_relevante } : a))
+  const toggleRelevancia = (id_articulo?: number) => {
+    if (!id_articulo) return;
+    setArticles((prev) =>
+      prev.map((a) =>
+        a.id_articulo === id_articulo
+          ? { ...a, detalle: { ...a.detalle, es_relevante: !a.detalle?.es_relevante } }
+          : a
+      )
     );
   };
 
@@ -63,8 +65,10 @@ export default function ArticleSelector() {
     setUploadSuccess(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
   const handleEnviarRelevantes = () => {
-    const relevantes = articles.filter((a) => a.es_relevante);
+    const relevantes = articles.filter((a) => a.detalle?.es_relevante);
+    console.log("Artículos relevantes a enviar:", relevantes);
     if (relevantes.length === 0) {
       alert("No hay artículos relevantes para enviar.");
       return;
@@ -73,9 +77,10 @@ export default function ArticleSelector() {
     router.push("/articulo/detalle");
   };
 
-  const relevantArticles = articles.filter((a) => a.es_relevante);
-  const nonRelevantArticles = articles.filter((a) => !a.es_relevante);
+  const relevantArticles = articles.filter((a) => a.detalle?.es_relevante);
+  const nonRelevantArticles = articles.filter((a) => !a.detalle?.es_relevante);
   const filteredArticles = activeTab === "relevant" ? relevantArticles : nonRelevantArticles;
+
 
   return (
     <div className={styles.layout}>
@@ -107,7 +112,11 @@ export default function ArticleSelector() {
               </div>
 
               {file && (
-                <button onClick={handleUpload} disabled={isUploading} className={styles.processButton}>
+                <button
+                  onClick={handleUpload}
+                  disabled={isUploading}
+                  className={styles.processButton}
+                >
                   {isUploading ? "Procesando..." : "Procesar Archivo"}
                 </button>
               )}
@@ -116,38 +125,46 @@ export default function ArticleSelector() {
         ) : (
           <div className={styles.resultsCard}>
             <div className={styles.resultsHeader}>
-            <div>
+              <div>
                 <h2 className={styles.sectionTitle}>Artículos Procesados</h2>
                 <p className={styles.sectionText}>
-                Total: {articles.length} • Relevantes: {relevantArticles.length} • No relevantes:{" "}
-                {nonRelevantArticles.length}
+                  Total: {articles.length} • Relevantes: {relevantArticles.length} • No relevantes:{" "}
+                  {nonRelevantArticles.length}
                 </p>
-            </div>
+              </div>
 
-            <div className={styles.actions}>
-                <button onClick={handleEnviarRelevantes} className={styles.sendButton}>
-                <CheckCircle className="w-4 h-4" /> Enviar Relevantes
+              <div className={styles.actions}>
+                <button
+                  onClick={handleEnviarRelevantes}
+                  className={styles.sendButton}
+                >
+                  <CheckCircle className="w-4 h-4" /> Enviar Relevantes
                 </button>
 
                 <button onClick={resetSelection} className={styles.resetButton}>
-                <XCircle className="w-4 h-4" /> Reiniciar
+                  <XCircle className="w-4 h-4" /> Reiniciar
                 </button>
+              </div>
             </div>
-            </div>
-
 
             <div className={styles.tabNav}>
               <button
                 onClick={() => setActiveTab("relevant")}
-                className={`${styles.tab} ${activeTab === "relevant" ? styles.tabActiveBlue : ""}`}
+                className={`${styles.tab} ${
+                  activeTab === "relevant" ? styles.tabActiveBlue : ""
+                }`}
               >
-                <CheckCircle className="w-4 h-4" /> Relevantes ({relevantArticles.length})
+                <CheckCircle className="w-4 h-4" /> Relevantes (
+                {relevantArticles.length})
               </button>
               <button
                 onClick={() => setActiveTab("non-relevant")}
-                className={`${styles.tab} ${activeTab === "non-relevant" ? styles.tabActiveRed : ""}`}
+                className={`${styles.tab} ${
+                  activeTab === "non-relevant" ? styles.tabActiveRed : ""
+                }`}
               >
-                <XCircle className="w-4 h-4" /> No Relevantes ({nonRelevantArticles.length})
+                <XCircle className="w-4 h-4" /> No Relevantes (
+                {nonRelevantArticles.length})
               </button>
             </div>
 
@@ -157,23 +174,31 @@ export default function ArticleSelector() {
                   <tr>
                     <th className={styles.tableHeader}>DOI</th>
                     <th className={styles.tableHeader}>Título</th>
-                    <th className={styles.tableHeader}>Año</th>
+                    <th className={styles.tableHeader}>Explicacion</th>
                     <th className={styles.tableHeader}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredArticles.map((a, idx) => (
-                    <tr key={a.doi || idx}>
-                      <td className={`${styles.tableCell} ${styles.tdDoi}`}>{a.doi}</td>
-                      <td className={`${styles.tableCell} ${styles.tdTitle}`}>{a.titulo}</td>
-                      <td className={styles.tableCell}>{a.anio ?? "—"}</td>
+                  {filteredArticles.map((a) => (
+                    <tr key={a.id_articulo}>
+                      <td className={`${styles.tableCell} ${styles.tdId}`}>
+                        {a.doi}
+                      </td>
+                      <td className={`${styles.tableCell} ${styles.tdTitle}`}>
+                        {a.titulo}
+                      </td>
+                      <td className={`${styles.tableCell} ${styles.tdExplicacion}`}>
+                        {a.detalle?.explicacion}
+                      </td>
                       <td className={styles.tableCell}>
                         <button
                           className={styles.actionButton}
                           title={
-                            a.es_relevante ? "Marcar como NO relevante" : "Marcar como relevante"
+                            a.detalle?.es_relevante
+                              ? "Marcar como NO relevante"
+                              : "Marcar como relevante"
                           }
-                          onClick={() => handleToggleRelevancia(a.doi)}
+                          onClick={() => toggleRelevancia(a.id_articulo)}
                         >
                           <Settings className="w-4 h-4" />
                         </button>
@@ -186,7 +211,9 @@ export default function ArticleSelector() {
               {filteredArticles.length === 0 && (
                 <div className={styles.emptyState}>
                   <Filter className="w-8 h-8 text-gray-400" />
-                  <p className="text-gray-500">No hay artículos en esta categoría</p>
+                  <p className="text-gray-500">
+                    No hay artículos en esta categoría
+                  </p>
                 </div>
               )}
             </div>
@@ -196,3 +223,4 @@ export default function ArticleSelector() {
     </div>
   );
 }
+

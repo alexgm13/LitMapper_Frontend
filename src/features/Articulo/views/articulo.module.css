@@ -244,6 +244,11 @@
   max-width: 500px;
 }
 
+.tdExplicacion {
+  max-width: 500px;
+}
+
+
 .emptyState {
   text-align: center;
   padding: 3rem 0;

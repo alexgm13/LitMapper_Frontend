@@ -1,30 +1,18 @@
 // src/features/Analisis/services/analisisService.ts
 import { api } from "@/lib/api/config";
+import { Articulo } from "../../types";
+import { Contexto } from "@/features/Contexto/types";
 
-export interface AnalisisArticulo {
-  id_articulo: number;
-  doi?: string;
-  titulo?: string;
-  resumen?: string;
-  anio?: number;
-  autor_palabras_clave?: string;
-  index_palabras_clave?: string;
-  es_relevante?: boolean;
-  objetivo_estudio?: string;
-  metodologia?: string;
-  hallazgos?: string;
-  tipo_brecha?: string;
-  brecha_investigacion?: string;
-  link_publicacion?: string;
-  pdf_procesado?: boolean;
-}
 
-export async function procesarPDF(id_articulo: number, file: File): Promise<AnalisisArticulo> {
+export async function procesarPDF(file: File, contexto: Contexto): Promise<Articulo> {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("id_articulo", id_articulo.toString());
+  formData.append("area_general", contexto.area_general);
+  formData.append("tema_especifico", contexto.tema_especifico);
+  formData.append("problema_investigacion", contexto.problema_investigacion);
+  formData.append("metodologia_enfoque", contexto.metodologia);
 
-  const { data } = await api.post("/api/analisis/pdf", formData, {
+  const { data } = await api.post("/api/articulo/brecha", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
@@ -33,4 +21,4 @@ export async function procesarPDF(id_articulo: number, file: File): Promise<Anal
   }
 
   return data.data;
-}
+} 

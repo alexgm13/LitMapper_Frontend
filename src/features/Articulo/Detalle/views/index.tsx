@@ -2,17 +2,23 @@
 import { useState, useRef } from "react";
 import { Upload, FileText, ExternalLink, CheckCircle } from "lucide-react";
 import styles from "./detalle.module.css";
-import { procesarPDF, AnalisisArticulo } from "../services/detalle";
+import { procesarPDF } from "../services/detalle";
 import { useArticuloStore } from "@/features/Articulo/store/useArticuloStore";
+import type { Articulo } from "@/features/Articulo/types";
+import { useContextoStore } from "@/features/Contexto/store/useContextoStore";
+import { useRouter } from "next/navigation";
 
 export default function DetalleView() {
   const { articulosRelevantes } = useArticuloStore();
-  const [articles, setArticles] = useState<AnalisisArticulo[]>(articulosRelevantes || []);
+  const [articles, setArticles] = useState<Articulo[]>(articulosRelevantes || []);
   const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
+  const contexto = useContextoStore((s) => s.contextoActivo);
+  const router = useRouter();
 
-  const handleFileChange = async (articleId: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (articleId:number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!contexto) return router.push("/proyecto");
     if (file.type !== "application/pdf") {
       alert("Por favor selecciona un archivo PDF válido");
       return;
@@ -20,15 +26,16 @@ export default function DetalleView() {
 
     try {
       setArticles((prev) =>
-        prev.map((a) => (a.id_articulo === articleId ? { ...a, isProcessing: true } : a))
+        prev.map((a) => (a.id_articulo === articleId ? { ...a} : a))
       );
 
-      const result = await procesarPDF(articleId, file);
+      const result = await procesarPDF(file,contexto);
+      console.log("PDF procesado:", result);
 
       setArticles((prev) =>
         prev.map((a) =>
           a.id_articulo === articleId
-            ? { ...a, ...result, pdf_procesado: true, isProcessing: false }
+            ? { ...a, ...result, pdf_procesado: true}
             : a
         )
       );
@@ -36,7 +43,7 @@ export default function DetalleView() {
       console.error(err);
       alert("Error al procesar el PDF");
       setArticles((prev) =>
-        prev.map((a) => (a.id_articulo === articleId ? { ...a, isProcessing: false } : a))
+        prev.map((a) => (a.id_articulo === articleId ? { ...a} : a))
       );
     }
   };
@@ -66,7 +73,9 @@ export default function DetalleView() {
                 <th>Objetivo</th>
                 <th>Metodología</th>
                 <th>Hallazgos</th>
+                <th>Tipo Brecha</th>
                 <th>Brecha</th>
+                
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -74,10 +83,11 @@ export default function DetalleView() {
               {articles.map((a) => (
                 <tr key={a.id_articulo}>
                   <td>{a.titulo}</td>
-                  <td>{a.objetivo_estudio || <span className={styles.empty}>PDF no procesado</span>}</td>
-                  <td>{a.metodologia || <span className={styles.empty}>PDF no procesado</span>}</td>
-                  <td>{a.hallazgos || <span className={styles.empty}>PDF no procesado</span>}</td>
-                  <td>{a.tipo_brecha || <span className={styles.empty}>PDF no procesado</span>}</td>
+                  <td>{a.detalle?.objetivo_estudio || <span className={styles.empty}>PDF no procesado</span>}</td>
+                  <td>{a.detalle?.metodologia || <span className={styles.empty}>PDF no procesado</span>}</td>
+                  <td>{a.detalle?.hallazgos || <span className={styles.empty}>PDF no procesado</span>}</td>
+                  <td>{a.brecha?.tipo_brecha || <span className={styles.empty}>PDF no procesado</span>}</td>
+                  <td>{a.brecha?.brecha_investigacion || <span className={styles.empty}>PDF no procesado</span>}</td>
                   <td>
                     {a.pdf_procesado ? (
                       <span className={styles.processed}>
@@ -86,10 +96,9 @@ export default function DetalleView() {
                     ) : (
                       <>
                         <input
-                          ref={(el) => {fileInputRefs.current[a.id_articulo] = el}}
                           type="file"
                           accept=".pdf"
-                          onChange={(e) => handleFileChange(a.id_articulo, e)}
+                          onChange={(e) => handleFileChange(a.id_articulo!, e)}
                           className="hidden"
                           id={`pdf-${a.id_articulo}`}
                         />
