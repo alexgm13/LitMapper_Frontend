@@ -1,10 +1,12 @@
 // src/features/Analisis/services/analisisService.ts
 import { api } from "@/lib/api/config";
-import { Articulo } from "../../types";
+import { Articulo } from "@/features/Articulo/types";
 import { Contexto } from "@/features/Contexto/types";
+import { ArticuloDetalleListado } from "../types";
+import { ApiResponse } from "@/types/api";
 
 
-export async function procesarPDF(file: File, contexto: Contexto): Promise<Articulo> {
+export async function procesarPDF(file: File, contexto: Contexto): Promise<ArticuloDetalleListado> {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("area_general", contexto.area_general);
@@ -21,4 +23,16 @@ export async function procesarPDF(file: File, contexto: Contexto): Promise<Artic
   }
 
   return data.data;
-} 
+}
+
+
+export async function obtenerArticulosRelevantesDetallados(
+  idProyecto: number
+): Promise<ArticuloDetalleListado[]> {
+  const { data } = await api.get<ApiResponse<ArticuloDetalleListado[]>>(
+    `/api/articulo/detalle/${idProyecto}`
+  );
+
+  if (!data.success|| !data.data) throw new Error(data.message);
+  return data.data;
+}

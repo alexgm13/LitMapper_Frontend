@@ -1,4 +1,4 @@
-import DetalleView from "@/features/Articulo/Detalle/views";
+import DetalleView from "@/features/Detalle/views";
 
 export default function ArticuloPage() {
   return <DetalleView />;

@@ -6,7 +6,7 @@ import { Proyecto } from "../types";
 
 export async function crearProyecto(data: Proyecto): Promise<Proyecto> {
   try {
-    const response = await api.post<ApiResponse<Proyecto>>("/api/proyecto/proyecto", data);
+    const response = await api.post<ApiResponse<Proyecto>>("/api/proyecto", data);
 
     const body = response.data;
 

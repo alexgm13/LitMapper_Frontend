@@ -6,7 +6,7 @@ import { Contexto } from "../types";
 
 export async function crearContexto(data: Contexto): Promise<Contexto> {
   try {
-    const response = await api.post<ApiResponse<Contexto>>("/api/tema/tema", data);
+    const response = await api.post<ApiResponse<Contexto>>("/api/tema", data);
 
     const body = response.data;
 
