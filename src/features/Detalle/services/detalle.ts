@@ -19,7 +19,7 @@ export async function procesarPDF(file: File, contexto: Contexto): Promise<Artic
   });
 
   if (!data.success || !data.data) {
-    throw new Error(data.message || "Error al procesar el PDF");
+    throw new Error(data.errors || "Error al procesar el PDF");
   }
 
   return data.data;

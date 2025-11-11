@@ -8,9 +8,14 @@ export interface ArticuloDetalleListado {
   muestra_poblacion: string;
   instrumentos_tecnicas: string;
   principales_resultados: string;
-  tipo_brecha: string;
-  brecha_identificada: string;
+  brechas_identificada: Brecha;
   aportaciones: string;
   notas_relevancia_contexto: string;
   pdf_procesado?: boolean
+}
+
+export interface Brecha {
+  tipo: 'Conceptual' | 'Metodológica' | 'De Datos' | 'De Comprensión' | 'De Intervención';
+  descripcion: string;
+  sustento?: string;
 }

@@ -130,8 +130,8 @@ export default function DetalleView() {
                   <td>{a.objetivo_estudio || <span className={styles.empty}>PDF no procesado</span>}</td>
                   <td>{a.enfoque_metodologico || <span className={styles.empty}>PDF no procesado</span>}</td>
                   <td>{a.principales_resultados || <span className={styles.empty}>PDF no procesado</span>}</td>
-                  <td>{a.tipo_brecha || <span className={styles.empty}>PDF no procesado</span>}</td>
-                  <td>{a.brecha_identificada || <span className={styles.empty}>PDF no procesado</span>}</td>
+                  <td>{a.brechas_identificada?.tipo || <span className={styles.empty}>PDF no procesado</span>}</td>
+                  <td>{a.brechas_identificada?.descripcion || <span className={styles.empty}>PDF no procesado</span>}</td>
                   <td>
                     {a.pdf_procesado ? (
                       <span className={styles.processed}>
