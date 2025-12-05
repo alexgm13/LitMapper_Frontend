@@ -4,8 +4,6 @@ import type { ArticuloDetalleListado } from "@/features/Detalle/types";
 import type { Contexto } from "@/features/Contexto/types";
 import { SotaResponse } from "../types";
 
-
-
 export async function generarSota(
   contexto: Contexto,
   articulos: ArticuloDetalleListado[]
@@ -19,12 +17,22 @@ export async function generarSota(
         metodologia_enfoque: contexto.metodologia,
       },
       articulos: articulos.map((a) => ({
-        ...a, 
+        doi: a.doi || "",
+        autores: a.autores || [],
+        titulo: a.titulo,
+        palabras_clave: a.palabras_clave || [],
+        objetivo_estudio: a.objetivo_estudio,
+        metodologia: a.enfoque_metodologico,
+        hallazgos: a.principales_resultados ? a.principales_resultados.split("\n") : [],
+        brecha: {
+          categoria: a.brechas_identificada.tipo,
+          descripcion: a.brechas_identificada.descripcion,
+          cita_evidencia_original: a.brechas_identificada.sustento || ""
+        }
       })),
     };
 
-
-    const { data } = await api.post<ApiResponse<SotaResponse>>("/api/sota/sota", payload);
+    const { data } = await api.post<ApiResponse<SotaResponse>>("/api/v1/sota/", payload);
 
     if (!data.success || !data.data) {
       console.error("❌ Error al generar SOTA:", data.errors || data.message);

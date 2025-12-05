@@ -14,7 +14,7 @@ export default function SotaView() {
 
   const [estadoArte, setEstadoArte] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [entropyData, setEntropyData] = useState<any>(null);
+  const [entropyData, setEntropyData] = useState(0);
   const [showEntropy, setShowEntropy] = useState(false);
 
   useEffect(() => {
@@ -90,30 +90,9 @@ export default function SotaView() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="bg-purple-50 p-4 rounded-lg text-center">
                     <div className="text-2xl font-bold text-purple-700">
-                      {entropyData.entropia_valor_sota.toFixed(3)}
+                      {entropyData.toFixed(3)}
                     </div>
                     <div className="text-sm text-purple-600">Valor de Entropía</div>
-                  </div>
-
-                  <div className="bg-blue-50 p-4 rounded-lg text-center">
-                    <div className="text-2xl font-bold text-blue-700 capitalize">
-                      {entropyData.entropia_nivel_sota}
-                    </div>
-                    <div className="text-sm text-blue-600">Nivel de Entropía</div>
-                  </div>
-
-                  <div className="bg-green-50 p-4 rounded-lg text-center">
-                    <div className="text-2xl font-bold text-green-700">
-                      {entropyData.total_palabras}
-                    </div>
-                    <div className="text-sm text-green-600">Palabras Totales</div>
-                  </div>
-
-                  <div className="bg-yellow-50 p-4 rounded-lg text-center">
-                    <div className="text-2xl font-bold text-yellow-700">
-                      {entropyData.palabras_unicas}
-                    </div>
-                    <div className="text-sm text-yellow-600">Palabras Únicas</div>
                   </div>
                 </div>
               </div>

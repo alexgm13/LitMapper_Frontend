@@ -1,157 +1,142 @@
-"use client";
+'use client';
+import { useEffect, useState } from 'react';
+import { Plus, Folder, CheckCircle, Clock } from 'lucide-react';
+import { ProjectCard } from '../components/Card'; 
+import { ProjectView } from '../types';
+import EmptyState from '../components/EmptyState';
+import StatCard from '../components/StatCard';
+import ProjectModal from '../components/ProyectoModal';
+import { getProjectsByUser } from '../services/proyecto';
+import { useAuthStore } from '../../../store/authStore';
 
-import { useState } from "react";
-import { Sparkles, FileText, Search, Brain, X, Check } from "lucide-react";
-import styles from "./proyecto.module.css"; 
-import { crearProyecto } from "../services/proyecto";
-import { useRouter } from "next/navigation";
-import { useProyectoStore } from "../store/useProyectoStore";
+export default function ProjectsView() {
+  const [projects, setProjects] = useState<ProjectView[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const user = useAuthStore((state) => state.user);
 
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!user?.id_usuario) return;
+      
+      try {
+        setIsLoading(true);
+        const response = await getProjectsByUser(user.id_usuario);
+        
+        if (response.success && response.data) {
+          const mappedProjects: ProjectView[] = response.data.map(p => ({
+            id: p.id_proyecto.toString(),
+            title: p.titulo,
+            description: '', 
+            status: p.estado === 'ACTIVO' ? 'in_progress' : 'completed', 
+            createdAt: p.fecha_creacion,
+            owner: user.nombre || 'Usuario',
+            progress: p.fase 
+          }));
+          setProjects(mappedProjects);
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-export default function ProyectoView() {
-  const [formData, setFormData] = useState({
-    titulo: "",
-    descripcion: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const router = useRouter();
-  const setProyectoActivo = useProyectoStore(
-  (state) => state.setProyectoActivo
-);
+    fetchProjects();
+  }, [user]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const handleProjectAction = async (action: string, projectId: number | string) => {
+    console.log(`Action: ${action} on project: ${projectId}`);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-    const nuevoProyecto = await crearProyecto({
-      titulo: formData.titulo,
-      descripcion: formData.descripcion,
-      id_usuario: 1, 
-    });
-    setProyectoActivo(nuevoProyecto);
-    console.log("✅ Proyecto creado:", nuevoProyecto);
-    setShowSuccess(true);
-     setTimeout(() => {
-        router.push("/contexto");
-      }, 1000);
-    } catch (error) {
-      console.error("Error al crear proyecto:", error);
-    } finally {
-      setIsSubmitting(false);
+    switch (action) {
+      case 'delete':
+        if (confirm('¿Estás seguro de que deseas eliminar este proyecto?')) {
+          try {
+            await fetch(`/api/projects/${projectId}`, { method: 'DELETE' });
+            setProjects(prev => prev.filter(p => p.id !== projectId));
+          } catch {
+            alert('Error al eliminar el proyecto');
+          }
+        }
+        break;
+      case 'edit':
+        // Aquí puedes abrir un modal o redirigir
+        console.log('Editar proyecto', projectId);
+        break;
+      case 'view':
+        // Redirige a detalle
+        console.log('Ver proyecto', projectId);
+        break;
     }
   };
 
-  const handleCancel = () => {
-    setFormData({ titulo: "", descripcion: "" });
+   const handleCreateNewProject = () => {
+    setIsModalOpen(true);
   };
 
+  // 🔹 Lógica cuando se crea un nuevo proyecto desde el modal
+  const handleProjectCreated = (nuevoProyecto: ProjectView) => {
+    setProjects(prev => [...prev, nuevoProyecto]); // agrega el nuevo a la lista
+    setIsModalOpen(false);
+  };
+
+  const total = projects.length;
+  const completed = projects.filter(p => p.status === 'completed').length;
+  const inProgress = projects.filter(p => p.status === 'in_progress').length;
+
+
   return (
-    <div className={styles.container}>
-      <div className={styles.wrapper}>
-        {showSuccess && (
-          <div className={styles.successBox}>
-            <div className={styles.successHeader}>
-              <Check className={styles.successIcon} />
-              <span className={styles.successTitle}>¡Proyecto creado exitosamente!</span>
-            </div>
-            <p className={styles.successMessage}>
-              Tu proyecto de investigación ha sido inicializado y está listo para comenzar el análisis de literatura científica.
+    <div className="w-full">
+      <header className="mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Mis Proyectos de Investigación
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Gestiona todos tus proyectos de investigación y estados del arte
             </p>
           </div>
-        )}
 
-        <div className={styles.card}>
-          <div className={styles.cardBody}>
-            <div className={styles.cardHeader}>
-              <h2 className={styles.cardTitle}>Nuevo Proyecto de Investigación</h2>
-            </div>
-
-            <form onSubmit={handleSubmit} className={styles.form}>
-              <div>
-                <label htmlFor="titulo" className={styles.label}>
-                  <FileText className={styles.labelIcon} />
-                  Título del Proyecto de Investigación
-                </label>
-                <input
-                  type="text"
-                  id="titulo"
-                  name="titulo"
-                  value={formData.titulo}
-                  onChange={handleChange}
-                  placeholder="Ej: Análisis de algoritmos de aprendizaje profundo en diagnóstico médico..."
-                  className={styles.input}
-                  required
-                />
-                <p className={styles.helperText}>
-                  Este será el tema principal para la búsqueda y análisis de artículos científicos
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="descripcion" className={styles.label}>
-                  <Search className={styles.labelIcon} />
-                  Descripción del Tema de Investigación
-                </label>
-                <textarea
-                  id="descripcion"
-                  name="descripcion"
-                  value={formData.descripcion}
-                  onChange={handleChange}
-                  placeholder="Describe en detalle tu tema de investigación..."
-                  rows={5}
-                  className={styles.textarea}
-                  required
-                />
-                <p className={styles.helperText}>
-                  Proporciona contexto adicional para mejorar la precisión de la búsqueda y análisis de literatura científica
-                </p>
-              </div>
-
-              <div className={styles.buttons}>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className={styles.submitBtn}
-                >
-                  {isSubmitting ? (
-                    <div className={styles.loading}>
-                      <div className={styles.spinner}></div>
-                      <span className={styles.loadingText}>
-                        <Sparkles className={styles.sparkIcon} />
-                        Iniciando Análisis IA...
-                      </span>
-                    </div>
-                  ) : (
-                    <div className={styles.loadingText}>
-                      <Sparkles className={styles.sparkIcon} />
-                      Crear Proyecto con IA
-                    </div>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className={styles.cancelBtn}
-                >
-                  <X className={styles.cancelIcon} />
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </div>
+          <button
+            onClick={handleCreateNewProject}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-indigo-800 transition-all duration-200 shadow-lg hover:shadow-xl"
+          >
+            <Plus className="w-5 h-5" />
+            Nuevo Proyecto
+          </button>
         </div>
-      </div>
+      </header>
+
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <StatCard label="Total Proyectos" value={total} icon={<Folder className="w-8 h-8 text-blue-600" />} />
+        <StatCard label="Completados" value={completed} icon={<CheckCircle className="w-8 h-8 text-green-600" />} />
+        <StatCard label="En Progreso" value={inProgress} icon={<Clock className="w-8 h-8 text-blue-600" />} />
+      </section>
+
+      {projects.length > 0 ? (
+        <section className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+          {projects.map((project) => (
+            <ProjectCard 
+              key={project.id} 
+              project={project} 
+              onAction={handleProjectAction} 
+            />
+          ))}
+        </section>
+      ) : (
+        <EmptyState onCreate={handleCreateNewProject} />
+      )}
+      <ProjectModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </div>
   );
 }
+
+
+
+

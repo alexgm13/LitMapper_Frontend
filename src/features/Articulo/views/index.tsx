@@ -3,17 +3,17 @@ import { useState, useRef, useEffect } from "react";
 
 import { Upload, CheckCircle, XCircle, Filter, Settings } from "lucide-react";
 import styles from "./articulo.module.css";
-import { actualizarRelevancia, obtenerArticulos, subirArchivoCSV } from "../services/articulo";
+import { obtenerArticulos, subirArchivoCSV } from "../services/articulo";
 import { useContextoStore } from "@/features/Contexto/store/useContextoStore";
-import type { ArticuloListado } from "../types";
+import type { Articulo } from "../types";
 import { useRouter } from "next/navigation";
-import { useArticuloStore } from "../store/useArticuloStore";
 import { useProyectoStore } from "@/features/Proyecto/store/useProyectoStore";
+import { useArticuloStore } from "../store/useArticuloStore";
 
 export default function ArticuloView() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [articles, setArticles] = useState<ArticuloListado[]>([]);
+  const [articles, setArticles] = useState<Articulo[]>([]);
   const [activeTab, setActiveTab] = useState<"relevant" | "non-relevant">("relevant");
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -21,28 +21,6 @@ export default function ArticuloView() {
   const proyecto = useProyectoStore((state) => state.proyectoActivo)
   const contexto = useContextoStore((s) => s.contextoActivo);
   const router = useRouter();
-
-  useEffect(() => {
-    if (proyecto?.id_proyecto) {
-      const fetchArticulos = async () => {
-        try {
-          if (!proyecto.id_proyecto) return;
-          const result = await obtenerArticulos(proyecto.id_proyecto);
-          if (!result) return;
-          if (result && result.length > 0) {
-            setArticles(result);
-            setUploadSuccess(true); 
-          } else {
-            setArticles([]);
-            setUploadSuccess(false); 
-          }
-        } catch (e) {
-          console.error("Error al obtener artículos:", e);
-        }
-      };
-      fetchArticulos();
-    }
-  }, [proyecto?.id_proyecto]);
 
 
 
@@ -56,46 +34,38 @@ export default function ArticuloView() {
   };
 
   const handleUpload = async () => {
-  if (!file) return alert("Selecciona un archivo");
-  if (!contexto) return router.push("/proyecto");
+    if (!file) return alert("Selecciona un archivo");
+    if (!contexto) return router.push("/proyecto");
 
-  setIsUploading(true);
-  try {
-    const idProyecto = proyecto?.id_proyecto!;
-    await subirArchivoCSV(file, contexto, idProyecto); // no devuelve artículos
+    setIsUploading(true);
+    try {
+      const idProyecto = proyecto?.id_proyecto!;
+      const nuevos = await subirArchivoCSV(file, contexto, idProyecto);
 
-    // luego listar los artículos
-    const nuevos = await obtenerArticulos(idProyecto);
-    if (!nuevos) return alert("Error al obtener artículos después de subir CSV");
-    setArticles(nuevos);
-    setUploadSuccess(true);
-  } catch (e) {
-    console.error(e);
-    alert("Error al procesar el archivo");
-  } finally {
-    setIsUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }
-};
+      if (nuevos) {
+        setArticles(nuevos);
+        setUploadSuccess(true);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error al procesar el archivo");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
-  const toggleRelevancia = async (id_articulo_detalle?: number, es_relevante?: boolean) => {
-  if (!id_articulo_detalle || es_relevante === undefined) return;
-
-  try {
-    await actualizarRelevancia(id_articulo_detalle, !es_relevante);
+  const toggleRelevancia = (id_articulo?: number, es_relevante?: boolean) => {
+    if (!id_articulo || es_relevante === undefined) return;
 
     setArticles((prev) =>
       prev.map((a) =>
-        a.id_articulo_detalle === id_articulo_detalle
-          ? { ...a, es_relevante: !a.es_relevante }
+        a.id_articulo === id_articulo
+          ? { ...a, detalle: { ...a.detalle, es_relevante: !a.detalle.es_relevante } }
           : a
       )
     );
-  } catch (error) {
-    console.error(error);
-    alert("Error al actualizar la relevancia en el servidor.");
-  }
-};
+  };
 
   const resetSelection = () => {
     setArticles([]);
@@ -104,20 +74,22 @@ export default function ArticuloView() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const setArticulosRelevantes = useArticuloStore((state) => state.setArticulosRelevantes);
+
   const handleEnviarRelevantes = () => {
-    const relevantes = articles.filter((a) => a.es_relevante);
+    const relevantes = articles.filter((a) => a.detalle.es_relevante);
     console.log("Artículos relevantes a enviar:", relevantes);
     if (relevantes.length === 0) {
       alert("No hay artículos relevantes para enviar.");
       return;
     }
-    router.push("/articulo/detalle");
+    setArticulosRelevantes(relevantes);
+    router.push("/dashboard/articulo/detalle");
   };
 
-  const relevantArticles = articles.filter((a) => a.es_relevante);
-  const nonRelevantArticles = articles.filter((a) => !a.es_relevante);
+  const relevantArticles = articles.filter((a) => a.detalle.es_relevante);
+  const nonRelevantArticles = articles.filter((a) => !a.detalle.es_relevante);
   const filteredArticles = activeTab === "relevant" ? relevantArticles : nonRelevantArticles;
-
 
   return (
     <div className={styles.layout}>
@@ -217,7 +189,7 @@ export default function ArticuloView() {
                 </thead>
                 <tbody>
                   {filteredArticles.map((a) => (
-                    <tr key={a.id_articulo_detalle}>
+                    <tr key={a.id_articulo}>
                       <td className={`${styles.tableCell} ${styles.tdId}`}>
                         {a.doi}
                       </td>
@@ -225,18 +197,18 @@ export default function ArticuloView() {
                         {a.titulo}
                       </td>
                       <td className={`${styles.tableCell} ${styles.tdExplicacion}`}>
-                        {a.explicacion}
+                        {a.detalle.justificacion}
                       </td>
                       <td className={styles.tableCell}>
                         <button
                           className={styles.actionButton}
                           title={
-                            a.es_relevante
+                            a.detalle.es_relevante
                               ? "Marcar como NO relevante"
                               : "Marcar como relevante"
                           }
                           onClick={() =>
-                            toggleRelevancia(a.id_articulo_detalle, a.es_relevante)
+                            toggleRelevancia(a.id_articulo, a.detalle.es_relevante)
                           }
                         >
                           <Settings className="w-4 h-4" />
@@ -262,4 +234,3 @@ export default function ArticuloView() {
     </div>
   );
 }
-

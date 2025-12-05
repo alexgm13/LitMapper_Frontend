@@ -1,38 +1,43 @@
 // src/features/Analisis/services/analisisService.ts
 import { api } from "@/lib/api/config";
-import { Articulo } from "@/features/Articulo/types";
+
 import { Contexto } from "@/features/Contexto/types";
 import { ArticuloDetalleListado } from "../types";
 import { ApiResponse } from "@/types/api";
 
 
-export async function procesarPDF(file: File, contexto: Contexto): Promise<ArticuloDetalleListado> {
+export async function procesarPDF(file: File): Promise<ArticuloDetalleListado> {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("area_general", contexto.area_general);
-  formData.append("tema_especifico", contexto.tema_especifico);
-  formData.append("problema_investigacion", contexto.problema_investigacion);
-  formData.append("metodologia_enfoque", contexto.metodologia);
 
-  const { data } = await api.post("/api/articulo/brecha", formData, {
+  const { data } = await api.post("/api/v1/articule/", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
   if (!data.success || !data.data) {
-    throw new Error(data.errors || "Error al procesar el PDF");
+    throw new Error(data.message || "Error al procesar el PDF");
   }
 
-  return data.data;
-}
+  const articule = data.data.articule;
+  const details = articule.details;
+  console.log(articule);
 
-
-export async function obtenerArticulosRelevantesDetallados(
-  idProyecto: number
-): Promise<ArticuloDetalleListado[]> {
-  const { data } = await api.get<ApiResponse<ArticuloDetalleListado[]>>(
-    `/api/articulo/detalle/${idProyecto}`
-  );
-
-  if (!data.success|| !data.data) throw new Error(data.message);
-  return data.data;
+  return {
+    titulo: details.titulo,
+    autores: details.autores,
+    palabras_clave: details.palabras_clave,
+    doi: details.doi,
+    objetivo_estudio: details.objetivo_estudio,
+    enfoque_metodologico: details.metodologia,
+    principales_resultados: Array.isArray(details.hallazgos) ? details.hallazgos.join("\n") : details.hallazgos,
+    brechas_identificada: {
+      tipo: details.brecha.categoria,
+      descripcion: details.brecha.descripcion,
+      sustento: details.brecha.cita_evidencia_original
+    },
+    notas_relevancia_contexto: "",
+    pdf_procesado: true,
+    entropy: articule.entropy,
+    score: articule.score
+  };
 }

@@ -8,8 +8,7 @@ interface ContextoState {
 }
 
 export const useContextoStore = create<ContextoState>((set) => ({
-      contextoActivo: null,
-      setContextoActivo: (contexto) => set({ contextoActivo: contexto }),
-      limpiarContexto: () => set({ contextoActivo: null }),
-    })
-  );
+  contextoActivo: null,
+  setContextoActivo: (contexto) => set({ contextoActivo: contexto }),
+  limpiarContexto: () => set({ contextoActivo: null }),
+}));
