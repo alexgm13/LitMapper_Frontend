@@ -29,7 +29,7 @@ const Modal = ({ isOpen, onClose, title, children }: { isOpen: boolean; onClose:
 };
 
 const MetricsModal = ({ article, isOpen, onClose }: { article: ArticuloDetalleListado; isOpen: boolean; onClose: () => void }) => {
-  const score = article.score?.puntaje_promedio || 0;
+  const score = article.score?.score_factualidad_descripcion || 0;
   // 0 -> High Hallucination (Bad), 1 -> Low Hallucination (Good)
   const isGood = score > 0.7;
   const isMedium = score > 0.4 && score <= 0.7;
