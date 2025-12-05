@@ -93,12 +93,13 @@ export default function DetalleView() {
 
   useEffect(() => {
     if (articulosRelevantes.length > 0) {
+      console.log("Articulos relevantes en Detalle:", articulosRelevantes);
       const mappedArticles: ArticuloDetalleListado[] = articulosRelevantes.map((a, index) => ({
         id_articulo_detalle: a.id_articulo ?? index,
         titulo: a.titulo,
         autores: [],
         palabras_clave: [],
-        doi: "",
+        doi: a.doi || "",
         objetivo_estudio: "",
         enfoque_metodologico: "",
         principales_resultados: "",
@@ -207,7 +208,25 @@ export default function DetalleView() {
             <tbody>
               {articles.map((a) => (
                 <tr key={a.id_articulo_detalle}>
-                  <td>{a.titulo}</td>
+                  <td>
+                    <div className="flex flex-col gap-1">
+                      <span className="font-medium">{a.titulo}</span>
+                      {a.doi ? (
+                        <a 
+                          href={`https://doi.org/${a.doi}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                          onClick={(e) => e.stopPropagation()} 
+                        >
+                          doi.org/{a.doi}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <span className="text-xs text-gray-400">No DOI disponible</span>
+                      )}
+                    </div>
+                  </td>
                   <td>{a.objetivo_estudio || <span className={styles.empty}>PDF no procesado</span>}</td>
                   <td>{a.enfoque_metodologico || <span className={styles.empty}>PDF no procesado</span>}</td>
                   <td>{a.principales_resultados || <span className={styles.empty}>PDF no procesado</span>}</td>
